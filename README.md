@@ -10,6 +10,6 @@ com.github.yuruki.FuseLauncher is an SCR component with one parameter: ChildPatt
 2. Override ChildPattern in com.github.yuruki.FuseLauncher.properties in the profile if necessary.
 3. Assign the profile to a root container.
 
-Now, when FabricService becomes available FuseLauncher will start the matching child containers.
+Now, when root container starts and FabricService becomes available FuseLauncher will start the matching child containers automatically.
 
 Note that osgi:shutdown on root doesn't stop the child containers. For that you should run scr:deactivate com.github.yuruki.FuseLauncher manually.
