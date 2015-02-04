@@ -30,8 +30,8 @@ public class FuseLauncher {
     private Pattern pattern = null;
 
     // Wait for FabricService
-    @Reference(referenceInterface = FabricService.class, bind = "gotFabricService", unbind = "lostFabricService", policy = ReferencePolicy.DYNAMIC)
-    FabricService fabricService;
+    @Reference(referenceInterface = FabricService.class, policy = ReferencePolicy.DYNAMIC)
+    volatile FabricService fabricService;
 
     @Activate
     public void activate(final BundleContext bundleContext, final Map<String, String> props) throws Exception {
@@ -39,7 +39,11 @@ public class FuseLauncher {
         for (Container c : fabricService.getCurrentContainer().getChildren()) {
             if (pattern.matcher(c.getId()).matches()) {
                 log.info("Starting container {}", c.getId());
-                fabricService.startContainer(c, true);
+                try {
+                    fabricService.startContainer(c, true);
+                } catch (IllegalStateException e) {
+                    log.warn(String.format("Failed to start container {}, this exception is ignored.", c.getId()), e);
+                }
             }
         }
     }
@@ -50,22 +54,12 @@ public class FuseLauncher {
             for (Container c : fabricService.getCurrentContainer().getChildren()) {
                 if (pattern.matcher(c.getId()).matches()) {
                     log.info("Stopping container {}", c.getId());
-                    fabricService.stopContainer(c, true);
+                    try {
+                        fabricService.stopContainer(c, true);
+                    } catch (IllegalStateException e) {
+                        log.warn(String.format("Failed to stop container {}, this exception is ignored.", c.getId()), e);
+                    }
                 }
-            }
-        }
-    }
-
-    protected void gotFabricService(FabricService f) {
-        fabricService = f;
-    }
-
-    public void lostFabricService(FabricService f) {
-        fabricService = null;
-        for (Container c : f.getCurrentContainer().getChildren()) {
-            if (pattern.matcher(c.getId()).matches()) {
-                log.info("Stopping container {}", c.getId());
-                f.stopContainer(c, true);
             }
         }
     }
