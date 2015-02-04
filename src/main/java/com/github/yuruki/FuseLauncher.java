@@ -42,7 +42,7 @@ public class FuseLauncher {
                 try {
                     fabricService.startContainer(c, true);
                 } catch (IllegalStateException e) {
-                    log.warn(String.format("Failed to start container {}, this exception is ignored.", c.getId()), e);
+                    log.warn(String.format("Failed to start container %s, this exception is ignored.", c.getId()), e);
                 }
             }
         }
@@ -57,7 +57,7 @@ public class FuseLauncher {
                     try {
                         fabricService.stopContainer(c, true);
                     } catch (IllegalStateException e) {
-                        log.warn(String.format("Failed to stop container {}, this exception is ignored.", c.getId()), e);
+                        log.warn(String.format("Failed to stop container %s, this exception is ignored.", c.getId()), e);
                     }
                 }
             }
