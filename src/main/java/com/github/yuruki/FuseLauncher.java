@@ -4,6 +4,7 @@ import java.util.Map;
 import java.util.regex.Pattern;
 
 import io.fabric8.api.Container;
+import io.fabric8.api.ContainerProvider;
 import io.fabric8.api.FabricService;
 import org.apache.felix.scr.annotations.Activate;
 import org.apache.felix.scr.annotations.Component;
@@ -11,7 +12,6 @@ import org.apache.felix.scr.annotations.Deactivate;
 import org.apache.felix.scr.annotations.Properties;
 import org.apache.felix.scr.annotations.Property;
 import org.apache.felix.scr.annotations.Reference;
-import org.apache.felix.scr.annotations.ReferencePolicy;
 import org.osgi.framework.BundleContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,8 +30,12 @@ public class FuseLauncher {
     private Pattern pattern = null;
 
     // Wait for FabricService
-    @Reference(referenceInterface = FabricService.class, policy = ReferencePolicy.DYNAMIC)
-    volatile FabricService fabricService;
+    @Reference(referenceInterface = FabricService.class)
+    FabricService fabricService;
+
+    // Wait for ContainerProvider for child containers
+    @Reference(referenceInterface = ContainerProvider.class, target = "(component.name=io.fabric8.container.provider.child)")
+    ContainerProvider childProvider;
 
     @Activate
     public void activate(final BundleContext bundleContext, final Map<String, String> props) throws Exception {
@@ -40,8 +44,8 @@ public class FuseLauncher {
             if (pattern.matcher(c.getId()).matches()) {
                 log.info("Starting container {}", c.getId());
                 try {
-                    fabricService.startContainer(c, true);
-                } catch (IllegalStateException e) {
+                    childProvider.start(c);
+                } catch (Exception e) {
                     log.warn(String.format("Failed to start container %s, this exception is ignored.", c.getId()), e);
                 }
             }
@@ -56,7 +60,7 @@ public class FuseLauncher {
                     log.info("Stopping container {}", c.getId());
                     try {
                         fabricService.stopContainer(c, true);
-                    } catch (IllegalStateException e) {
+                    } catch (Exception e) {
                         log.warn(String.format("Failed to stop container %s, this exception is ignored.", c.getId()), e);
                     }
                 }
